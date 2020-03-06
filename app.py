@@ -1,5 +1,24 @@
 import face_recognition
 import sqlite3
+import cv2
+from threading import Thread
+from imutils.io import TempFile
+import os
+
+# Storing the image temporarily for the pop-up window
+def send(image, ref_no):
+	# create a temporary path for the image and write it to file
+	tempImage = TempFile()
+	cv2.imwrite(tempImage.path, image)
+	way = tempImage.path
+	now = datetime.datetime.now()
+	date = now.strftime("%d-%m-%Y")
+	reference_no = ref_no
+
+	# start a thread to upload the file and send it
+	t = Thread(target=add_new_customer, args=(tempImage, way, date, reference_no, image,))
+	t.daemon = True
+	t.start()
 
 # Declare all the list
 known_face_encodings = []
