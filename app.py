@@ -3,6 +3,8 @@ import sqlite3
 import cv2
 from threading import Thread
 from imutils.io import TempFile
+import tkinter as tk
+from tkinter import *
 import os
 
 # Storing the image temporarily for the pop-up window
@@ -19,6 +21,67 @@ def send(image, ref_no):
 	t = Thread(target=add_new_customer, args=(tempImage, way, date, reference_no, image,))
 	t.daemon = True
 	t.start()
+
+# Creating pop-up window for new customer
+def add_new_customer(tempImage, way, date, reference_no, image):
+	master = tk.Tk()
+	master.title("Cusomter list")
+	master.geometry('650x900+0+0')
+
+	conn = sqlite3.connect('customers_database.db')
+	c = conn.cursor()
+
+	fol = way
+	logo_path = "assets/logo.jpg"
+	bg = ImageTk.PhotoImage(Image.open(logo_path))
+	upload = ImageTk.PhotoImage(Image.open(fol))
+	tempImage.cleanup()
+
+	K0 = Label(master, text="Add new customer profile", font=("arial",30,"bold"), fg="steelblue").place(x=10,y=500)
+	K1 = Label(master, image = upload).place(x=10,y=10)
+	k2 = Label(master, image = bg).place(x=0,y=0)
+	K3 = Label(master, text="Date: {}".format(date), font=("arial", 16)).place(x=10,y=550)
+	K4 = Label(master, text="Reference Number: {}".format(reference_no), font=("arial", 16)).place(x=10,y=600)
+	K5 = Label(master, text="Name:", font=("arial", 16)).place(x=10,y=650)
+	K6 = Label(master, text="Mobile Number:", font=("arial", 16)).place(x=10,y=700)
+	K7 = Label(master, text="Email:", font=("arial", 16)).place(x=10,y=750)
+	K8 = Label(master, text="Purchased Items:", font=("arial", 16)).place(x=10,y=800)
+
+	name = StringVar(master)
+	mobile_no = StringVar(master)
+	email = StringVar(master)
+	purchased_items = StringVar(master)
+
+	nameT = Entry(master, textvariable = name)
+	nameT.place(x=200,y=660)
+	mobile_noT = Entry(master, textvariable = mobile_no)
+	mobile_noT.place(x=200,y=710)
+	emailT = Entry(master, textvariable = email)
+	emailT.place(x=200,y=760)
+	purchased_itemsT = Entry(master, textvariable = purchased_items)
+	purchased_itemsT.place(x=200,y=810)
+
+	# Adding new customer details to the sqlite database
+	def add_to_database():
+		print("You have submitted a record")
+		img_loc = "assets/img/customers/{}.jpg".format(name.get())
+		cv2.imwrite(img_loc, image)
+
+		c.execute('CREATE TABLE IF NOT EXISTS customers (date TEXT , name TEXT UNIQUE, mobile_no INTEGER UNIQUE, email TEXT UNIQUE, reference_no INTEGER PRIMARY KEY AUTOINCREMENT, img_loc TEXT)')
+		c.execute('CREATE TABLE IF NOT EXISTS items (name TEXT, date TEXT, purchased_items TEXT)')
+		c.execute('INSERT INTO customers (name, mobile_no, email, date, img_loc) VALUES (?, ?, ?, ?, ?)',(name.get(), mobile_no.get(), email.get(), date, img_loc))
+		c.execute('INSERT INTO items (name, date, purchased_items) VALUES (?, ?, ?)', (name.get(), date, purchased_items.get()))
+		conn.commit()
+
+		name.set('')
+		mobile_no.set('')
+		email.set('')
+		print("Record submitted successfully")
+		master.destroy()
+
+	V1 = Button(master, text='Submit', command=add_to_database).place(x=10,y=850)
+	V2 = Button(master, text='Cancel', command=master.quit).place(x=300,y=850)
+	master.mainloop()
 
 # Declare all the list
 known_face_encodings = []
