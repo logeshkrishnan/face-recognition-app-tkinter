@@ -83,6 +83,65 @@ def add_new_customer(tempImage, way, date, reference_no, image):
 	V2 = Button(master, text='Cancel', command=master.quit).place(x=300,y=850)
 	master.mainloop()
 
+# Storing details temporarily to retreive data
+def get(date, name, mobile_no, email, reference_no, img_loc, dats):
+
+	t = Thread(target=get_from_database, args=(date, name, mobile_no, email, reference_no, img_loc, dats))
+	t.daemon = True
+	t.start()
+
+# Getting data from the database
+def get_from_database(date, name, mobile_no, email, reference_no, img_loc, dats):
+	master = tk.Tk()
+	master.title("Customer list")
+	master.geometry('650x900+0+0')
+
+	def add_purchased():
+		conn = sqlite3.connect('customers_database.db')
+		c = conn.cursor()
+		c.execute('INSERT INTO items (name, date, purchased_items) VALUES (?, ?, ?)', (name, date, purchase.get()))
+		conn.commit()
+		master.destroy()
+
+	fol = img_loc
+	upload = ImageTk.PhotoImage(Image.open(fol))
+	logo_path = "assets/logo.jpg"
+	bg = ImageTk.PhotoImage(Image.open(logo_path))
+
+	L0 = Label(master, text="Customer Details", font=("arial",30,"bold"), fg="steelblue").place(x=10,y=500)
+	L1 = Label(master, image=upload).place(x=10,y=10)
+	L2 = Label(master, image = bg).place(x=0,y=0)
+	L3 = Label(master, text="Date: {}".format(date), font=("arial", 16)).place(x=10,y=550)
+	L4 = Label(master, text="Reference Number: {}".format(reference_no), font=("arial", 16)).place(x=10,y=600)
+	L5 = Label(master, text="Name: {}".format(name), font=("arial", 16)).place(x=10,y=650)
+	L6 = Label(master, text="Mobile Number: {}".format(mobile_no), font=("arial", 16)).place(x=10,y=700)
+	L7 = Label(master, text="Email: {}".format(email), font=("arial", 16)).place(x=10,y=750)
+	L8 = Label(master, text="Purchased Items:", font=("arial", 16)).place(x=10, y=800)
+
+	purchase = StringVar(master)
+	purchaseT = Entry(master, textvariable=purchase)
+	purchaseT.place(x=200,y=810)
+
+	frame = Frame(master)
+	frame.place(x=350, y =500)
+
+	Lb = Listbox(frame, height = 15, width = 30,font=("arial", 12))
+	Lb.pack(side = TOP, fill = X)
+
+	scroll = Scrollbar(frame, orient = HORIZONTAL)
+	scroll.config(command = Lb.xview)
+	scroll.pack(side = BOTTOM, fill = X)
+	Lb.config(xscrollcommand = scroll.set)
+	Lb.insert(0, 'Date, Purchased Items')
+
+	for row in dats:
+		Lb.insert(1, row)
+
+	B1 = Button(master, text='Submit', command=add_purchased).place(x=10,y=850)
+	B2 = Button(master, text='Cancel', command=master.quit).place(x=300,y=850)
+
+	master.mainloop()
+
 # Declare all the list
 known_face_encodings = []
 known_face_names = []
